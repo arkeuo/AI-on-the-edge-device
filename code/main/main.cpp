@@ -168,6 +168,17 @@ extern "C" void app_main(void)
         setSystemStatusFlag(SYSTEM_STATUS_SDCARD_CHECK_BAD); // reduced web interface going to be loaded
     }
 
+    // SD card: sustained R/W check, larger than the biggest tflite model
+    // The basic check above is passed by cards which are already unusable for
+    // large reads. Status LED is set to blink indefinitely because at this point
+    // the network is not up yet and a dying card can put the device into a boot
+    // loop: the LED is then the only signal that survives.
+    // ********************************************
+    if (checkSdCardSustainedRW() < 0) {
+        setStatusLed(SDCARD_CHECK, 5, true);
+        setSystemStatusFlag(SYSTEM_STATUS_SDCARD_CHECK_BAD); // reduced web interface going to be loaded
+    }
+
     // SD card: Check presence of some mandatory folders / files
     // ********************************************
     if (!checkSdCardFolderFilePresence()) {
