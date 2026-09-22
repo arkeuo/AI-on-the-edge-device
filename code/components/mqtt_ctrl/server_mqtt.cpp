@@ -19,6 +19,7 @@
 #include "time_sntp.h"
 #include "helper.h"
 #include "system.h"
+#include "sdcard_check.h"
 #include "gpioControl.h"
 
 static const char *TAG = "SERVER_MQTT";
@@ -227,6 +228,11 @@ bool mqttServer_publishDeviceStatus(int _qos)
     retVal &= publishMqttData(cfgDataPtr->mainTopic + deviceStatusTopic + "sd_partition_free",
                               std::to_string(getSDCardFreePartitionSpace()), _qos, false);
     retVal &= publishMqttData(cfgDataPtr->mainTopic + deviceStatusTopic + "ntp_syncstatus", getNTPSyncStatus().c_str(), _qos, false);
+    // Result of the sustained SD check: 0 = healthy, negative = error code.
+    // Published so a degrading card can be alarmed on while the device is still
+    // alive, which is the window the status LED alone does not give you.
+    retVal &= publishMqttData(cfgDataPtr->mainTopic + deviceStatusTopic + "sd_sustained_check",
+                              std::to_string(getSdCardSustainedRWResult()), _qos, false);
 
     if (!retVal) {
         LogFile.writeToFile(ESP_LOG_ERROR, TAG, "Failed to publish device status");
